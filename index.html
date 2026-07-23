@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Talentos Excepcionais — Diagnóstico de Perfil</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #1C1C1E;
+    --red: #EA1D2C;
+    --white: #FFFFFF;
+    --card: #2C2C2E;
+    --secondary: #8E8E93;
+    --gradient: linear-gradient(135deg, #EA1D2C, #FF6B35);
+    --border-radius: 16px;
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--white);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 0;
+  }
+  .screen { display: none; width: 100%; max-width: 700px; margin: 0 auto; padding: 24px 16px 40px; }
+  .screen.active { display: flex; flex-direction: column; align-items: center; }
+
+  /* ── SPLASH ── */
+  .splash-logo { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; margin-top: 32px; }
+  .splash-logo svg { width: 44px; height: 44px; }
+  .splash-logo-text { font-size: 24px; font-weight: 800; color: var(--red); letter-spacing: -0.5px; }
+  .splash-tagline { font-size: 13px; color: var(--secondary); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 48px; text-align: center; }
+  .splash-title { font-size: 36px; font-weight: 800; text-align: center; line-height: 1.15; margin-bottom: 16px; }
+  .splash-title span { background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .splash-desc { font-size: 16px; color: var(--secondary); text-align: center; line-height: 1.7; max-width: 520px; margin-bottom: 40px; }
+  .pill { background: var(--card); border-radius: 100px; padding: 8px 16px; font-size: 13px; color: var(--secondary); border: 1px solid #3A3A3C; }
+  .archetype-pills { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-bottom: 48px; }
+  .btn-primary { background: var(--gradient); color: var(--white); border: none; border-radius: 12px; padding: 18px 48px; font-size: 17px; font-weight: 700; font-family: inherit; cursor: pointer; transition: opacity 0.2s, transform 0.15s; letter-spacing: 0.3px; }
+  .btn-primary:hover { opacity: 0.9; transform: translateY(-2px); }
+  .btn-primary:active { transform: translateY(0); }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  .btn-secondary { background: var(--card); color: var(--white); border: 1.5px solid #3A3A3C; border-radius: 12px; padding: 14px 32px; font-size: 15px; font-weight: 600; font-family: inherit; cursor: pointer; transition: border-color 0.2s, background 0.2s; }
+  .btn-secondary:hover { border-color: var(--red); background: #2a1a1b; }
+
+  /* ── FORM ── */
+  .form-title { font-size: 22px; font-weight: 700; text-align: center; margin-bottom: 8px; }
+  .form-sub { font-size: 14px; color: var(--secondary); text-align: center; margin-bottom: 32px; line-height: 1.6; }
+  .form-group { width: 100%; margin-bottom: 18px; }
+  .form-label { display: block; font-size: 13px; font-weight: 600; color: var(--secondary); margin-bottom: 8px; letter-spacing: 0.3px; }
+  .form-label span { color: var(--red); }
+  .form-input, .form-select { width: 100%; background: var(--card); border: 2px solid #3A3A3C; border-radius: 12px; padding: 14px 16px; font-size: 15px; color: var(--white); font-family: inherit; outline: none; transition: border-color 0.2s; appearance: none; }
+  .form-select { background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238E8E93' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; background-size: 18px; }
+  .form-input:focus, .form-select:focus { border-color: var(--red); }
+  .form-input::placeholder { color: #5A5A5E; }
+  .form-error { font-size: 12px; color: #FF6B6B; margin-top: 6px; display: none; }
+  .form-error.visible { display: block; }
+  .form-note { font-size: 12px; color: var(--secondary); text-align: center; margin-top: 16px; line-height: 1.6; }
+
+  /* ── QUIZ ── */
+  .quiz-header { width: 100%; margin-bottom: 32px; }
+  .progress-bar-wrap { background: #3A3A3C; border-radius: 100px; height: 6px; width: 100%; overflow: hidden; margin-bottom: 10px; }
+  .progress-bar-fill { height: 100%; background: var(--gradient); border-radius: 100px; transition: width 0.4s cubic-bezier(.4,0,.2,1); }
+  .progress-text { font-size: 13px; color: var(--secondary); text-align: right; }
+  .question-num { font-size: 13px; color: var(--red); font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 12px; }
+  .question-text { font-size: 21px; font-weight: 700; line-height: 1.4; margin-bottom: 28px; }
+  .options-grid { display: flex; flex-direction: column; gap: 12px; width: 100%; margin-bottom: 28px; }
+  .option-card { background: var(--card); border: 2px solid #3A3A3C; border-radius: var(--border-radius); padding: 18px 20px; cursor: pointer; transition: border-color 0.2s, background 0.2s, transform 0.15s; display: flex; align-items: flex-start; gap: 14px; }
+  .option-card:hover { border-color: #666; background: #353537; transform: translateX(3px); }
+  .option-card.selected { border-color: var(--red); background: rgba(234,29,44,0.10); }
+  .option-letter { width: 28px; height: 28px; border-radius: 8px; background: #3A3A3C; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: var(--secondary); flex-shrink: 0; transition: background 0.2s, color 0.2s; }
+  .option-card.selected .option-letter { background: var(--red); color: #fff; }
+  .option-text { font-size: 15px; line-height: 1.5; color: var(--white); }
+  .quiz-footer { width: 100%; display: flex; justify-content: space-between; align-items: center; }
+  .btn-back { background: transparent; border: none; color: var(--secondary); font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; padding: 10px; }
+  .btn-back:hover { color: var(--white); }
+  .btn-back:disabled { opacity: 0; pointer-events: none; }
+
+  /* ── LOADING ── */
+  .loading-screen { text-align: center; }
+  .spinner { width: 64px; height: 64px; border: 5px solid #3A3A3C; border-top-color: var(--red); border-radius: 50%; animation: spin 0.9s linear infinite; margin: 40px auto 28px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-title { font-size: 24px; font-weight: 700; margin-bottom: 12px; }
+  .loading-sub { font-size: 15px; color: var(--secondary); }
+
+  /* ── THANKS ── */
+  .thanks-screen { text-align: center; }
+  .thanks-icon { margin: 40px auto 28px; }
+  .thanks-icon svg { width: 80px; height: 80px; }
+  .thanks-title { font-size: 30px; font-weight: 800; margin-bottom: 12px; }
+  .thanks-sub { font-size: 16px; color: var(--secondary); line-height: 1.7; max-width: 440px; margin: 0 auto 40px; }
+  .thanks-divider { width: 60px; height: 4px; background: var(--gradient); border-radius: 100px; margin: 0 auto 40px; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════
+     CONFIGURAÇÃO — substitua o placeholder pela URL real
+     do Apps Script após publicar como aplicação web
+     (veja o arquivo apps-script-backend.gs e o guia de deploy)
+═══════════════════════════════════════════════════════ -->
+<script>
+const SCRIPT_URL = 'https://script.google.com/macros/s/PLACEHOLDER/exec';
+</script>
+
+<!-- ── SPLASH ── -->
+<div id="screen-splash" class="screen active">
+  <div class="splash-logo">
+    <svg viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="22" cy="22" r="22" fill="#EA1D2C"/>
+      <path d="M22 8C14.27 8 8 14.27 8 22s6.27 14 14 14 14-6.27 14-14S29.73 8 22 8zm0 24.5c-5.8 0-10.5-4.7-10.5-10.5S16.2 11.5 22 11.5 32.5 16.2 32.5 22 27.8 32.5 22 32.5z" fill="#fff"/>
+      <circle cx="22" cy="22" r="5" fill="#fff"/>
+    </svg>
+    <span class="splash-logo-text">iFood</span>
+  </div>
+  <p class="splash-tagline">Talentos Excepcionais</p>
+  <h1 class="splash-title">Descubra seu<br><span>perfil de talento</span></h1>
+  <p class="splash-desc">Responda 20 situações do seu dia a dia — na escola, na faculdade ou em projetos pessoais — e nos ajude a entender melhor como você atua.</p>
+  <div class="archetype-pills">
+    <span class="pill">Construtor Social</span>
+    <span class="pill">Expert Técnica</span>
+    <span class="pill">Competidor de Elite</span>
+    <span class="pill">Líder Comunicador</span>
+  </div>
+  <button class="btn-primary" onclick="showScreen('screen-form')">Começar</button>
+</div>
+
+<!-- ── FORM ── -->
+<div id="screen-form" class="screen">
+  <h2 class="form-title">Antes de começar</h2>
+  <p class="form-sub">Precisamos de alguns dados para registrar sua participação.</p>
+
+  <div class="form-group">
+    <label class="form-label">Nome completo <span>*</span></label>
+    <input type="text" id="field-nome" class="form-input" placeholder="Seu nome completo" autocomplete="name">
+    <p id="err-nome" class="form-error">Por favor, informe seu nome completo.</p>
+  </div>
+
+  <div class="form-group">
+    <label class="form-label">E-mail <span>*</span></label>
+    <input type="email" id="field-email" class="form-input" placeholder="seu@email.com" autocomplete="email">
+    <p id="err-email" class="form-error">Informe um e-mail válido.</p>
+  </div>
+
+  <div class="form-group">
+    <label class="form-label">Escola / Instituição <span>*</span></label>
+    <input type="text" id="field-escola" class="form-input" placeholder="Nome da sua escola, faculdade ou instituto" autocomplete="organization">
+    <p id="err-escola" class="form-error">Informe sua escola ou instituição.</p>
+  </div>
+
+  <div class="form-group">
+    <label class="form-label">Etapa atual <span>*</span></label>
+    <select id="field-etapa" class="form-select">
+      <option value="" disabled selected>Selecione</option>
+      <option value="Ensino Fundamental">Ensino Fundamental</option>
+      <option value="Ensino Médio">Ensino Médio</option>
+      <option value="Graduação">Graduação</option>
+      <option value="Recém-formado / Profissional">Recém-formado / Profissional</option>
+    </select>
+    <p id="err-etapa" class="form-error">Selecione sua etapa atual.</p>
+  </div>
+
+  <button class="btn-primary" onclick="submitForm()" style="width:100%;margin-top:8px">Avançar para as perguntas</button>
+  <p class="form-note">Suas respostas individuais não serão exibidas para você — elas ajudam a equipe do programa a entender melhor o seu perfil.</p>
+</div>
+
+<!-- ── QUIZ ── -->
+<div id="screen-quiz" class="screen">
+  <div class="quiz-header">
+    <div class="progress-bar-wrap"><div id="progress-fill" class="progress-bar-fill" style="width:0%"></div></div>
+    <p class="progress-text"><span id="q-num">1</span> de 20</p>
+  </div>
+  <p class="question-num">Pergunta <span id="q-label">1</span></p>
+  <p id="q-text" class="question-text"></p>
+  <div id="options-grid" class="options-grid"></div>
+  <div class="quiz-footer">
+    <button id="btn-back" class="btn-back" onclick="prevQuestion()">← Voltar</button>
+    <button id="btn-next" class="btn-primary" onclick="nextQuestion()" disabled style="min-width:140px">Próxima</button>
+  </div>
+</div>
+
+<!-- ── LOADING ── -->
+<div id="screen-loading" class="screen loading-screen">
+  <div class="spinner"></div>
+  <p class="loading-title">Enviando sua resposta…</p>
+  <p class="loading-sub">Aguarde um instante.</p>
+</div>
+
+<!-- ── THANKS ── -->
+<div id="screen-thanks" class="screen thanks-screen">
+  <div class="thanks-icon">
+    <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="40" cy="40" r="40" fill="rgba(234,29,44,0.15)"/>
+      <circle cx="40" cy="40" r="28" fill="rgba(234,29,44,0.25)"/>
+      <path d="M26 42l10 10 18-20" stroke="#EA1D2C" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </div>
+  <h2 class="thanks-title">Resposta enviada!</h2>
+  <div class="thanks-divider"></div>
+  <p class="thanks-sub">Obrigado por participar do diagnóstico de Talentos Excepcionais. Suas respostas foram registradas com sucesso.</p>
+  <button class="btn-secondary" onclick="window.location.reload()">Voltar ao início</button>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════
+   PERGUNTAS — 20 situações práticas
+   Cada opção tem um código de arquétipo:
+   CS = Construtor Social | ET = Expert Técnica
+   CE = Competidor de Elite | LC = Líder Comunicador
+   A ORDEM das opções é embaralhada na tela (renderQuestion),
+   mas o código do arquétipo viaja junto com cada opção —
+   não há bias de posição.
+═══════════════════════════════════════════════════════ */
+const PERGUNTAS = [
+  {
+    texto: "Você recebe um projeto em grupo com prazo curto e peso alto na nota. Seu primeiro instinto é:",
+    opcoes: [
+      { texto: "Reunir o grupo, dividir tarefas e garantir que todo mundo entenda o objetivo", arquetipo: "CS" },
+      { texto: "Mergulhar fundo no tema antes de propor qualquer solução", arquetipo: "ET" },
+      { texto: "Montar um plano para entregar antes do prazo e se destacar entre os grupos", arquetipo: "CE" },
+      { texto: "Conversar com cada um para entender forças e já alinhar quem faz o quê", arquetipo: "LC" }
+    ]
+  },
+  {
+    texto: "Você percebe que um colega cometeu um erro importante numa apresentação. O que faz?",
+    opcoes: [
+      { texto: "Ajuda o colega a corrigir de forma discreta, sem expor ninguém", arquetipo: "CS" },
+      { texto: "Analisa com calma a origem do erro e propõe uma revisão completa do conteúdo", arquetipo: "ET" },
+      { texto: "Aponta o erro na hora, porque isso pode custar pontos ou credibilidade", arquetipo: "CE" },
+      { texto: "Conversa abertamente com o grupo e propõe ajustar a fala juntos", arquetipo: "LC" }
+    ]
+  },
+  {
+    texto: "Um professor ou orientador propõe um trabalho que mistura várias áreas de conhecimento. Você:",
+    opcoes: [
+      { texto: "Organiza o grupo para que cada parte se conecte e ninguém fique de fora", arquetipo: "CS" },
+      { texto: "Aprofunda-se no conteúdo de cada área para entregar algo sólido tecnicamente", arquetipo: "ET" },
+      { texto: "Busca o formato que vai gerar a maior nota ou o melhor resultado possível", arquetipo: "CE" },
+      { texto: "Reúne o grupo para que cada um contribua com sua força e apresente ao professor", arquetipo: "LC" }
+    ]
+  },
+  {
+    texto: "Você é escolhido para mediar um debate ou uma discussão em grupo. Sua abordagem principal é:",
+    opcoes: [
+      { texto: "Garantir que todos participem e que o clima seja respeitoso", arquetipo: "CS" },
+      { texto: "Preparar regras claras e cobrar que os argumentos sejam bem fundamentados", arquetipo: "ET" },
+      { texto: "Manter o ritmo acelerado para cobrir todos os pontos e gerar um resultado concreto", arquetipo: "CE" },
+      { texto: "Facilitar o diálogo entre os lados até encontrar um consenso", arquetipo: "LC" }
+    ]
+  },
+  {
+    texto: "Na hora de escolher um tema para um projeto ou trabalho, você tende a:",
+    opcoes: [
+      { texto: "Priorizar um tema que beneficie o grupo e motive todo mundo", arquetipo: "CS" },
+      { texto: "Escolher algo que desafie seu conhecimento técnico e te ensine algo novo", arquetipo: "ET" },
+      { texto: "Optar pelo tema com maior potencial de se destacar e gerar reconhecimento", arquetipo: "CE" },
+      { texto: "Buscar um tema em que todos os membros se sintam representados", arquetipo: "LC" }
+    ]
+  },
+  {
+    texto: "Você encontra um erro num trabalho ou código que um colega fez. Seu primeiro passo é:",
+    opcoes: [
+      { texto: "Sentar com o colega, explicar o raciocínio e ensiná-lo a resolver sozinho", arquetipo: "CS" },
+      { texto: "Analisar em detalhe a causa raiz antes de propor a correção mais adequada", arquetipo: "ET" },
+      { texto: "Corrigir rapidamente você mesmo, para o projeto não perder ritmo", arquetipo: "CE" },
+      { texto: "Mostrar o erro ao colega e resolver juntos, em conjunto", arquetipo: "LC" }
+    ]
+  },
+  {
+    texto: "Uma ferramenta ou software novo é introduzido no seu grupo, turma ou time. Você:",
+    opcoes: [
+      { texto: "Organiza um momento para ensinar os outros, para ninguém ficar para trás", arquetipo: "CS" },
+      { texto: "Estuda a documentação a fundo antes de começar a usar, para dominar de verdade", arquetipo: "ET" },
+      { texto: "Testa na prática os recursos principais para se tornar o mais produtivo possível, rápido", arquetipo: "CE" },
+      { texto: "Conversa com o grupo para decidir juntos a melhor forma de aplicar a ferramenta", arquetipo: "LC" }
+    ]
+  },
+  {
+    texto: "Você precisa entregar um relatório ou trabalho escrito. O que mais valoriza no processo?",
+    opcoes: [
+      { texto: "Que seja claro e útil para quem for usar as informações depois", arquetipo: "CS" },
+      { texto: "Que esteja preciso, bem estruturado e sem erros de método", arquetipo: "ET" },
+      { texto: "Que tenha achados que se destaquem e mostrem alto desempenho", arquetipo: "CE" },
+      { texto: "Que conte uma história completa e engaje quem estiver lendo", arquetipo: "LC" }
+    ]
+  },
+  {
+    texto: "Num projeto com uso de tecnologia, você prefere ficar responsável por:",
+    opcoes: [
+      { texto: "Ensinar quem tem menos experiência e ajudar o time a crescer junto", arquetipo: "CS" },
+      { texto: "Cuidar da parte técnica mais complexa, para garantir qualidade no longo prazo", arquetipo: "ET" },
+      { texto: "Implementar a funcionalidade mais desafiadora, a que traz resultado mais rápido", arquetipo: "CE" },
+      { texto: "Coordenar as entregas e manter todo mundo alinhado sobre o andamento", arquetipo: "LC" }
+    ]
+  },
+  {
+    texto: "Ao se preparar para uma prova, olimpíada ou avaliação técnica, seu método principal é:",
+    opcoes: [
+      { texto: "Formar um grupo de estudos para trocar ideias e cobrir mais conteúdo junto", arquetipo: "CS" },
+      { texto: "Estudar os fundamentos a fundo e criar resumos bem detalhados sozinho", arquetipo: "ET" },
+      { texto: "Focar nos tópicos com mais chance de cair e treinar bastante com simulados", arquetipo: "CE" },
+      { texto: "Criar materiais de revisão que também ajudem os colegas a se prepararem", arquetipo: "LC" }
+    ]
+  },
+  {
+    texto: "Uma tarefa importante aparece com prazo apertadíssimo. Você:",
+    opcoes: [
+      { texto: "Reúne o grupo para priorizar junto e entregar o máximo possível em conjunto", arquetipo: "CS" },
+      { texto: "Faz uma análise rápida do escopo mínimo viável e entrega com qualidade", arquetipo: "ET" },
+      { texto: "Foca no que traz mais resultado e entrega no menor tempo possível", arquetipo: "CE" },
+      { texto: "Conversa com quem pediu para alinhar expectativas enquanto organiza o trabalho", arquetipo: "LC" }
+    ]
+  },
+  {
+    texto: "Numa competição, feira de ciências ou hackathon, você se enxerga principalmente como:",
+    opcoes: [
+      { texto: "A pessoa que mantém o time motivado e unido, mesmo sob pressão", arquetipo: "CS" },
+      { texto: "A pessoa especialista, que entrega a solução mais bem construída e fundamentada", arquetipo: "ET" },
+      { texto: "A pessoa competitiva, que quer estar entre as melhores e entregar o resultado mais forte", arquetipo: "CE" },
+      { texto: "A pessoa que lidera e coordena o time para performar no máximo do potencial", arquetipo: "LC" }
+    ]
+  },
+  {
+    texto: "Quando o grupo está desanimado no meio de um projeto, você:",
+    opcoes: [
+      { texto: "Propõe uma atividade para reerguer o ânimo e reaproximar o grupo", arquetipo: "CS" },
+      { texto: "Identifica o que está travando tecnicamente e propõe soluções concretas", arquetipo: "ET" },
+      { texto: "Mostra exemplos de sucesso e resultados possíveis para reengajar o time", arquetipo: "CE" },
+      { texto: "Conversa individualmente com cada pessoa para entender o que está pegando", arquetipo: "LC" }
+    ]
+  },
+  {
+    texto: "Você foi o único que conseguiu resolver um problema bem difícil. O que faz?",
+    opcoes: [
+      { texto: "Documenta a solução e ensina o grupo, para que todos aprendam junto", arquetipo: "CS" },
+      { texto: "Aprofunda a análise até chegar na solução mais elegante e eficiente possível", arquetipo: "ET" },
+      { texto: "Já parte para implementar, para garantir vantagem e não perder tempo", arquetipo: "CE" },
+      { texto: "Explica o problema ao grupo e decide com eles qual caminho seguir", arquetipo: "LC" }
+    ]
+  },
+  {
+    texto: "Se você pudesse escolher o tipo de projeto para se dedicar agora, optaria por:",
+    opcoes: [
+      { texto: "Um projeto colaborativo, onde o resultado depende da união do grupo", arquetipo: "CS" },
+      { texto: "Um projeto técnico de alto nível, que exija domínio profundo de um assunto", arquetipo: "ET" },
+      { texto: "Uma competição ou desafio de inovação, com resultado claramente mensurável", arquetipo: "CE" },
+      { texto: "Um projeto que gere impacto visível e conecte pessoas diferentes", arquetipo: "LC" }
+    ]
+  },
+  {
+    texto: "Numa reunião de grupo, ninguém quer apresentar o trabalho. Você:",
+    opcoes: [
+      { texto: "Propõe ensaiar junto, para todo mundo ficar mais confortável", arquetipo: "CS" },
+      { texto: "Se oferece para estruturar a apresentação e montar um roteiro que facilite a fala de todos", arquetipo: "ET" },
+      { texto: "Se voluntaria para apresentar, porque quer ser avaliado diretamente pelo seu desempenho", arquetipo: "CE" },
+      { texto: "Conversa com cada um para entender o receio e decidir juntos o melhor encaminhamento", arquetipo: "LC" }
+    ]
+  },
+  {
+    texto: "Ao receber um feedback crítico sobre um trabalho seu, você tende a:",
+    opcoes: [
+      { texto: "Discutir abertamente com o grupo e integrar o feedback nas ideias de todos", arquetipo: "CS" },
+      { texto: "Analisar cada ponto com cuidado para entender exatamente o que pode melhorar", arquetipo: "ET" },
+      { texto: "Focar nos pontos de maior impacto, para maximizar o resultado na próxima entrega", arquetipo: "CE" },
+      { texto: "Conversar com quem deu o feedback para entender como gerar mais valor a partir dele", arquetipo: "LC" }
+    ]
+  },
+  {
+    texto: "Um conhecido pede sua ajuda com um projeto pessoal dele, fora do contexto escolar. Você:",
+    opcoes: [
+      { texto: "Se envolve de verdade para ajudá-lo a alcançar o objetivo dele", arquetipo: "CS" },
+      { texto: "Faz uma análise honesta e estruturada, compartilhando o que sabe tecnicamente", arquetipo: "ET" },
+      { texto: "Ajuda a definir metas claras e cobra o progresso para garantir execução", arquetipo: "CE" },
+      { texto: "Conversa sobre as motivações dele e ajuda a planejar os próximos passos juntos", arquetipo: "LC" }
+    ]
+  },
+  {
+    texto: "Numa formatura ou cerimônia de encerramento, você gostaria de ser reconhecido por:",
+    opcoes: [
+      { texto: "Ter sido a pessoa que mais contribuiu para o sucesso coletivo da turma", arquetipo: "CS" },
+      { texto: "Ter entregado o trabalho individual de maior qualidade técnica", arquetipo: "ET" },
+      { texto: "Ter se destacado nos rankings e competições ao longo do caminho", arquetipo: "CE" },
+      { texto: "Ter sido a ponte entre colegas, professores e a instituição", arquetipo: "LC" }
+    ]
+  },
+  {
+    texto: "Olhando para trás, o que mais te orgulha numa experiência marcante que você viveu é:",
+    opcoes: [
+      { texto: "Ver como o grupo cresceu junto e como todos se ajudaram no caminho", arquetipo: "CS" },
+      { texto: "Ter desenvolvido uma habilidade técnica profunda que não tinha antes", arquetipo: "ET" },
+      { texto: "Ter superado desafios difíceis e alcançado um dos melhores resultados possíveis", arquetipo: "CE" },
+      { texto: "Ter construído relações genuínas que foram além do ambiente da escola ou faculdade", arquetipo: "LC" }
+    ]
+  }
+];
+
+const TOTAL = PERGUNTAS.length;
+
+/* ═══════════════════════════════════════════════════════
+   ESTADO DO QUIZ
+═══════════════════════════════════════════════════════ */
+let currentQuestion = 0;
+let answers = {};            // { Q1: "CS", Q2: "ET", ... }
+let renderedOrder = {};      // guarda a ordem embaralhada exibida em cada pergunta
+let sent = false;
+
+/* ═══════════════════════════════════════════════════════
+   NAVEGAÇÃO ENTRE TELAS
+═══════════════════════════════════════════════════════ */
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function shuffle(array) {
+  const arr = array.slice();
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+/* ═══════════════════════════════════════════════════════
+   FORMULÁRIO INICIAL
+═══════════════════════════════════════════════════════ */
+function submitForm() {
+  let valid = true;
+
+  const nome = document.getElementById('field-nome');
+  const email = document.getElementById('field-email');
+  const escola = document.getElementById('field-escola');
+  const etapa = document.getElementById('field-etapa');
+
+  const errNome = document.getElementById('err-nome');
+  const errEmail = document.getElementById('err-email');
+  const errEscola = document.getElementById('err-escola');
+  const errEtapa = document.getElementById('err-etapa');
+
+  [errNome, errEmail, errEscola, errEtapa].forEach(el => el.classList.remove('visible'));
+
+  if (!nome.value.trim()) { errNome.classList.add('visible'); valid = false; }
+  if (!email.value.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value.trim())) {
+    errEmail.classList.add('visible'); valid = false;
+  }
+  if (!escola.value.trim()) { errEscola.classList.add('visible'); valid = false; }
+  if (!etapa.value) { errEtapa.classList.add('visible'); valid = false; }
+
+  if (!valid) return;
+
+  answers = {
+    _nome: nome.value.trim(),
+    _email: email.value.trim().toLowerCase(),
+    _escola: escola.value.trim(),
+    _etapa: etapa.value
+  };
+
+  currentQuestion = 0;
+  renderQuestion();
+  showScreen('screen-quiz');
+}
+
+/* ═══════════════════════════════════════════════════════
+   RENDERIZAÇÃO DA PERGUNTA
+═══════════════════════════════════════════════════════ */
+function renderQuestion() {
+  const q = PERGUNTAS[currentQuestion];
+  const key = 'Q' + (currentQuestion + 1);
+
+  document.getElementById('q-num').textContent = currentQuestion + 1;
+  document.getElementById('q-label').textContent = currentQuestion + 1;
+  document.getElementById('q-text').textContent = q.texto;
+
+  const progress = (currentQuestion / TOTAL) * 100;
+  document.getElementById('progress-fill').style.width = progress + '%';
+
+  // embaralha as opções apenas na primeira vez que a pergunta é exibida,
+  // e reutiliza a mesma ordem se o usuário voltar
+  if (!renderedOrder[key]) {
+    renderedOrder[key] = shuffle(q.opcoes);
+  }
+  const opcoesExibidas = renderedOrder[key];
+
+  const grid = document.getElementById('options-grid');
+  grid.innerHTML = '';
+  const letters = ['A', 'B', 'C', 'D'];
+
+  opcoesExibidas.forEach(function(opcao, idx) {
+    const card = document.createElement('div');
+    card.className = 'option-card';
+    card.setAttribute('data-arquetipo', opcao.arquetipo);
+    card.setAttribute('role', 'button');
+    card.setAttribute('tabindex', '0');
+    if (answers[key] === opcao.arquetipo) card.classList.add('selected');
+
+    const letter = document.createElement('span');
+    letter.className = 'option-letter';
+    letter.textContent = letters[idx];
+
+    const optText = document.createElement('span');
+    optText.className = 'option-text';
+    optText.textContent = opcao.texto;
+
+    card.appendChild(letter);
+    card.appendChild(optText);
+
+    card.addEventListener('click', function() { selectOption(key, opcao.arquetipo); });
+    card.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' || e.key === ' ') { selectOption(key, opcao.arquetipo); }
+    });
+
+    grid.appendChild(card);
+  });
+
+  document.getElementById('btn-next').disabled = !answers[key];
+  document.getElementById('btn-next').textContent =
+    currentQuestion === TOTAL - 1 ? 'Finalizar' : 'Próxima';
+  document.getElementById('btn-back').disabled = currentQuestion === 0;
+}
+
+/* ═══════════════════════════════════════════════════════
+   SELEÇÃO DE OPÇÃO
+═══════════════════════════════════════════════════════ */
+function selectOption(key, arquetipo) {
+  answers[key] = arquetipo;
+
+  const grid = document.getElementById('options-grid');
+  grid.querySelectorAll('.option-card').forEach(function(card) {
+    card.classList.toggle('selected', card.getAttribute('data-arquetipo') === arquetipo);
+  });
+
+  document.getElementById('btn-next').disabled = false;
+}
+
+/* ═══════════════════════════════════════════════════════
+   NAVEGAÇÃO ENTRE PERGUNTAS
+═══════════════════════════════════════════════════════ */
+function nextQuestion() {
+  const key = 'Q' + (currentQuestion + 1);
+  if (!answers[key]) return;
+
+  if (currentQuestion < TOTAL - 1) {
+    currentQuestion++;
+    renderQuestion();
+  } else {
+    sendAnswers();
+  }
+}
+
+function prevQuestion() {
+  if (currentQuestion === 0) return;
+  currentQuestion--;
+  renderQuestion();
+}
+
+/* ═══════════════════════════════════════════════════════
+   CÁLCULO DO PERCENTUAL POR ARQUÉTIPO
+═══════════════════════════════════════════════════════ */
+function calcularPercentuais() {
+  const contagem = { CS: 0, ET: 0, CE: 0, LC: 0 };
+  for (let i = 1; i <= TOTAL; i++) {
+    const val = answers['Q' + i];
+    if (val && contagem.hasOwnProperty(val)) contagem[val]++;
+  }
+  const pct = {};
+  Object.keys(contagem).forEach(k => {
+    pct[k] = Math.round((contagem[k] / TOTAL) * 1000) / 10; // 1 casa decimal
+  });
+  return { contagem: contagem, percentuais: pct };
+}
+
+/* ═══════════════════════════════════════════════════════
+   ENVIO AO BACKEND
+   fetch POST text/plain; sendBeacon como fallback se fetch falhar
+═══════════════════════════════════════════════════════ */
+function sendAnswers() {
+  if (sent) return;
+  sent = true;
+
+  showScreen('screen-loading');
+
+  const resultado = calcularPercentuais();
+
+  const payload = {
+    nome: answers._nome,
+    email: answers._email,
+    escola: answers._escola,
+    etapa: answers._etapa,
+    pct_construtor_social: resultado.percentuais.CS,
+    pct_expert_tecnica: resultado.percentuais.ET,
+    pct_competidor_elite: resultado.percentuais.CE,
+    pct_lider_comunicador: resultado.percentuais.LC
+  };
+  for (let i = 1; i <= TOTAL; i++) {
+    payload['Q' + i] = answers['Q' + i];
+  }
+
+  const json = JSON.stringify(payload);
+
+  fetch(SCRIPT_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain' },
+    body: json,
+    keepalive: false
+  }).then(function() {
+    showScreen('screen-thanks');
+  }).catch(function() {
+    const sent2 = navigator.sendBeacon(SCRIPT_URL, json);
+    if (!sent2) {
+      console.warn('sendBeacon também falhou; resposta não enviada.');
+    }
+    showScreen('screen-thanks');
+  });
+}
+</script>
+</body>
+</html>
